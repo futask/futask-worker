@@ -2,6 +2,7 @@ import express, { Express, NextFunction, Request, Response } from 'express';
 import appRouter from './src/routes';
 import dotenv from 'dotenv';
 import logger from './src/helpers/logger';
+import executeTasks from './src/lib/task-execution';
 
 dotenv.config();
 
@@ -28,6 +29,8 @@ app.use((err: Error & { status?: number }, request: Request, res: Response, next
 app.listen(port, () => {
   logger.info(`✅ [server]: Server is running at http://localhost:${port}`);
 });
+
+executeTasks();
 
 process.on('unhandledRejection', err => {
   logger.error('🛑 DBG::Unhandled Rejection at: %o', err);

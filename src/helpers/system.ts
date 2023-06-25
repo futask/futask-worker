@@ -1,6 +1,6 @@
 type EnvKey =
   'JOB_FINISHED' |
-  'SCHEDULER_ENDPOINT';
+  'APP_SCHEDULER_ENDPOINT';
 
 export const getEnv = (name: EnvKey): string => {
   const value = process.env[name];
