@@ -10,3 +10,7 @@ export const getEnv = (name: EnvKey): string => {
 
   return value || '';
 };
+
+export const setEnv = (name: EnvKey, value: string) => {
+  process.env[name] = value;
+};

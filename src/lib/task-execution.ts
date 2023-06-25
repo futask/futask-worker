@@ -19,7 +19,9 @@ const digestTasks = async () => {
 const isJobFinished = () => +getEnv('JOB_FINISHED');
 
 const runJob = async () => {
+  logger.info('🚀 start running task')
   if (isJobFinished()) {
+    logger.info('✅ Stop')
     return process.exit(0);
   }
 
