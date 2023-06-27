@@ -8,3 +8,6 @@ export const getReadyTasks = () => schedulerServer.get<{ tasks?: Task[], process
 
 export const markCompletedTasks = (processId: string) =>
   schedulerServer.post(['consumptions', 'tasks', 'completions'], { processId });
+
+export const markFailedTasks = (ids: string[]) =>
+  schedulerServer.post(['consumptions', 'tasks', 'failures'], { ids });

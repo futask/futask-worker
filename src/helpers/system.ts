@@ -1,5 +1,6 @@
 type EnvKey =
   'JOB_FINISHED' |
+  'DEFAULT_CALLBACK_URL' |
   'APP_SCHEDULER_ENDPOINT';
 
 export const getEnv = (name: EnvKey): string => {

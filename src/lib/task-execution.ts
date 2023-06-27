@@ -1,27 +1,37 @@
 import logger from '../helpers/logger';
 import { getEnv } from '../helpers/system';
-import { getReadyTasks, markCompletedTasks } from '../external-services/scheduler';
+import { getReadyTasks, markCompletedTasks, markFailedTasks } from '../external-services/scheduler';
 import Task from '../models/task';
+import HttpRequest from '../helpers/request';
 
-const executeTasks = (tasks: Task[]) => Promise.resolve(tasks);
+const executeTask = (task: Task) => new HttpRequest('')
+  .post(task.payload.callbackUrl || getEnv('DEFAULT_CALLBACK_URL'), task.payload.data)
+  .then(() => '')
+  .catch(() => task._id);
+
+const executeTasks = (tasks: Task[]) => Promise.all(tasks.map(executeTask)).then(ids => ids.filter(Boolean));
+
 const digestTasks = async () => {
   const { tasks, processId } = await getReadyTasks().catch(err => {
     return { tasks: [], processId: '' }
   });
 
-  if (!tasks || !tasks.length) {
+  if (!tasks || !tasks.length || !processId) {
     return;
   }
   return executeTasks(tasks)
-    .then(() => markCompletedTasks(processId!));
+    .then(async failedIds => {
+      if (!failedIds.length) {
+        await markFailedTasks(failedIds);
+      }
+      return markCompletedTasks(processId!)
+    });
 }
 
 const isJobFinished = () => +getEnv('JOB_FINISHED');
 
 const runJob = async () => {
-  logger.info('🚀 start running task')
   if (isJobFinished()) {
-    logger.info('✅ Stop')
     return process.exit(0);
   }
 
