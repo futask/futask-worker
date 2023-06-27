@@ -1,3 +1,7 @@
 export default interface Task {
-  payload: Record<string, unknown>
+  _id: string;
+  payload: {
+    callbackUrl?: string;
+    data: Record<string, unknown>;
+  }
 }

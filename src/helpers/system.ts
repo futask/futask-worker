@@ -1,10 +1,11 @@
 type EnvKey =
   'JOB_FINISHED' |
+  'DEFAULT_CALLBACK_URL' |
   'APP_SCHEDULER_ENDPOINT';
 
 export const getEnv = (name: EnvKey): string => {
   const value = process.env[name];
-  if (!value) {
+  if (!value && process.env.APP_ENV === 'development') {
     console.log(`🔥 DBG::Missing env ${name}`);
   }
 

@@ -6,5 +6,5 @@ const schedulerServer = new HttpRequest(getEnv('APP_SCHEDULER_ENDPOINT') + '/v1.
 
 export const getReadyTasks = () => schedulerServer.get<{ tasks?: Task[], processId?: string }>(['consumptions', 'tasks']);
 
-export const markCompletedTasks = (processId: string) =>
-  schedulerServer.post(['consumptions', 'tasks', 'completions'], { processId });
+export const markCompletedTasks = (processId: string, failureIds?: string[]) =>
+  schedulerServer.post(['consumptions', 'tasks', 'completions'], { processId, failureIds });
