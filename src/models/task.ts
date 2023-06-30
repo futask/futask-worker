@@ -3,5 +3,11 @@ export default interface Task {
   payload: {
     callbackUrl?: string;
     data: Record<string, unknown>;
-  }
+  };
+  triggerAt: number;
+  createdAt: number;
+  updatedAt: number;
+
+  _processingId: string;
+  _processingAt: number;
 }

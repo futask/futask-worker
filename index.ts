@@ -3,11 +3,19 @@ import appRouter from './src/routes';
 import dotenv from 'dotenv';
 import logger from './src/helpers/logger';
 import executeTasks from './src/lib/task-execution';
+import { connect } from 'mongoose';
+import { getEnv, getEnvNumber } from './src/helpers/system';
 
 dotenv.config();
 
 const app: Express = express();
-const port = process.env.PORT || 3000;
+const port = getEnvNumber('PORT') || 3000;
+
+// connect mongodb
+connect(getEnv('APP_MONGODB_URI')).catch(err => {
+  logger.info('🛑 DBG::Mongodb Can not connect to DB', err.message);
+  process.exit(1);
+});
 
 app.use(express.json());
 

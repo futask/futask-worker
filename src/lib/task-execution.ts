@@ -1,8 +1,35 @@
 import logger from '../helpers/logger';
 import { getEnv } from '../helpers/system';
-import { getReadyTasks, markCompletedTasks } from '../external-services/scheduler';
 import Task from '../models/task';
 import HttpRequest from '../helpers/request';
+import * as TaskCollection from '../db/task';
+import uuid from '../helpers/uuid';
+import { nowMs } from '../helpers/datetime';
+import { notifyProcessedTasks } from '../integrations/metric-server';
+
+const flagProcessingTasks = async (processId: string, amount: number) => {
+  const tasks = await TaskCollection.findAvailable(amount, { fields: ['_id'] });
+
+  return TaskCollection.updateManyById(tasks.map(t => t._id), { _processingId: processId, _processingAt: nowMs() });
+}
+
+const getConsumptionTasks = async (amount: number) => {
+  const processId = uuid();
+
+  await flagProcessingTasks(processId, amount);
+
+  return TaskCollection.find({ _processingId: processId }, { fields: ['payload']}).then(tasks => ({ tasks, processId }));
+}
+
+const flagConsumptionSuccess = async (processId: string, failureIds?: string[]) => {
+  if (failureIds?.length) {
+    await TaskCollection.markFailed(failureIds);
+  }
+
+  return TaskCollection.markCompleted(processId)
+    .then(count => notifyProcessedTasks(count))
+    .catch(err => logger.error('🛑 delete tasks failed, err: %o, ids: %o', err.message));
+};
 
 const executeTask = (task: Task) => {
   const url = task.payload.callbackUrl || getEnv('DEFAULT_CALLBACK_URL');
@@ -19,7 +46,8 @@ const executeTask = (task: Task) => {
 const executeTasks = (tasks: Task[]) => Promise.all(tasks.map(executeTask)).then(ids => ids.filter(Boolean));
 
 const digestTasks = async () => {
-  const { tasks, processId } = await getReadyTasks().catch(err => {
+  const DEFAULT_CUNSUMPTION_AMOUNT = 500;
+  const { tasks, processId } = await getConsumptionTasks(DEFAULT_CUNSUMPTION_AMOUNT).catch(err => {
     return { tasks: [], processId: '' }
   });
 
@@ -28,7 +56,7 @@ const digestTasks = async () => {
   }
 
   return executeTasks(tasks)
-    .then(failureIds => markCompletedTasks(processId!, failureIds));
+    .then(failureIds => flagConsumptionSuccess(processId!, failureIds));
 }
 
 const isJobFinished = () => +getEnv('JOB_FINISHED');
